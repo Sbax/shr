@@ -28,19 +28,39 @@ last_artist = ref("")
 # collection.
 max_candidates = 5
 
+# Cache the directory listing. Walking a library of 20k+ files (and calling
+# file.is_directory on each entry) is expensive, so we do it only once and then
+# refresh it periodically in the background instead of on every track pick.
+refresh_interval = 1800.0  # rescan the library every 30 minutes
+library = ref([])
+
+# Rebuild the cached list of playable files from the tracks directory.
+def refresh_library() =
+  # file.ls with recursive=true also returns the sub-directories themselves.
+  # Keep only regular files so Liquidsoap never tries to resolve a directory.
+  all_entries = file.ls(tracks_dir, absolute=true, recursive=true)
+  files_only = list.filter(fun (p) -> not file.is_directory(p), all_entries)
+  library := files_only
+  log.important(label="library", "Indexed #{list.length(files_only)} tracks.")
+end
+
+# Scan once at startup and then keep the cache fresh in the background so the
+# heavy directory walk never blocks playback (the stream starts immediately and
+# stays silent for the brief moment the first scan takes).
+thread.run(refresh_library)
+thread.run.recurrent(
+  delay=refresh_interval,
+  { refresh_library(); refresh_interval }
+)
+
 # --- Track selection -------------------------------------------------------
 # Returns the next request as a (possibly empty) list, as expected by
 # request.dynamic.list. We pick a random track whose duration is within the
 # allowed range and whose artist differs from the previously played one.
 def next_track() =
-  # file.ls with recursive=true also returns the sub-directories themselves.
-  # Keep only regular files so Liquidsoap never tries to resolve a directory.
-  all_entries = file.ls(tracks_dir, absolute=true, recursive=true)
-  files_only = list.filter(fun (p) -> not file.is_directory(p), all_entries)
-  # Only inspect a small random sample so we never resolve (and read the
-  # duration of) the entire library before starting playback.
-  candidates = list.shuffle(files_only)
-  candidates = list.prefix(max_candidates, candidates)
+  # Only inspect a small random sample from the cached library so we never
+  # resolve (and read the duration of) the entire collection to start a track.
+  candidates = list.prefix(max_candidates, list.shuffle(library()))
 
   def rec pick(files) =
     if files == [] then
