@@ -1,143 +1,32 @@
 #!/usr/bin/env liquidsoap
 
 # ---------------------------------------------------------------------------
-# Self Hosted Radio - Liquidsoap scheduling script
+# Self Hosted Radio - Liquidsoap script
 #
-# - Plays every track found in /tracks (mounted from ./tracks).
-# - Never plays the same artist twice in a row.
-# - Excludes tracks shorter than 1 minute or longer than 5 minutes.
-# - Streams to the Icecast container on the "icecast" host.
+# Plays a random track from /tracks (mounted from ./tracks) and streams it to
+# the Icecast container.
 # ---------------------------------------------------------------------------
 
 # Log to stdout so `docker compose logs` shows what is happening.
 log.stdout := true
 log.level := 3
 
-# --- Configuration ---------------------------------------------------------
-tracks_dir = "/tracks"
-min_duration = 60.0    # 1 minute
-max_duration = 300.0   # 5 minutes
-
-# Remember the artist of the last track we played so we never play the same
-# artist twice in a row.
-last_artist = ref("")
-
-# How many random candidates to inspect per selection. Resolving a request
-# reads the track's metadata (including its duration), so with a large library
-# we only want to pay that cost for a handful of tracks instead of the whole
-# collection.
-max_candidates = 5
-
-# Cache the directory listing. Walking a library of 20k+ files (and calling
-# file.is_directory on each entry) is expensive, so we do it only once and then
-# refresh it periodically in the background instead of on every track pick.
-refresh_interval = 1800.0  # rescan the library every 30 minutes
-library = ref([])
-
-# Rebuild the cached list of playable files from the tracks directory.
-def refresh_library() =
-  # file.ls with recursive=true also returns the sub-directories themselves.
-  # Keep only regular files so Liquidsoap never tries to resolve a directory.
-  all_entries = file.ls(tracks_dir, absolute=true, recursive=true)
-  files_only = list.filter(fun (p) -> not file.is_directory(p), all_entries)
-  library := files_only
-  log.important(label="library", "Indexed #{list.length(files_only)} tracks.")
-end
-
-# Scan once at startup and then keep the cache fresh in the background so the
-# heavy directory walk never blocks playback (the stream starts immediately and
-# stays silent for the brief moment the first scan takes).
-thread.run(refresh_library)
-thread.run.recurrent(
-  delay=refresh_interval,
-  { refresh_library(); refresh_interval }
-)
-
-# Cache the estimated duration of each file. Estimating a track's duration is
-# the expensive step (Liquidsoap decodes the file to measure it), so we compute
-# it lazily -- only for the handful of tracks we actually sample -- and remember
-# the result forever. After the first play of a file its duration is free.
-durations = ref([])
-
-# Return the cached duration for a resolved request, computing and storing it
-# the first time we encounter the file.
-def track_duration(path, r) =
-  cached = list.assoc.mem(path, durations())
-  if cached then
-    list.assoc(default=0.0, path, durations())
-  else
-    m = request.metadata(r)
-    d = float_of_string(default=0.0, m["duration"])
-    durations := list.add((path, d), durations())
-    d
-  end
-end
-
-# --- Track selection -------------------------------------------------------
-# Returns the next request as a (possibly empty) list, as expected by
-# request.dynamic.list. We pick a random track whose duration is within the
-# allowed range and whose artist differs from the previously played one.
-def next_track() =
-  # Only inspect a small random sample from the cached library so we never
-  # resolve (and read the duration of) the entire collection to start a track.
-  candidates = list.prefix(max_candidates, list.shuffle(library()))
-
-  def rec pick(files) =
-    if files == [] then
-      # Nothing matched (e.g. a single artist library): clear the constraint
-      # so the next call can succeed instead of starving the stream.
-      last_artist := ""
-      []
-    else
-      path = list.hd(default="", files)
-      rest = list.tl(files)
-      r = request.create(path)
-      if request.resolve(r) then
-        m = request.metadata(r)
-        artist = m["artist"]
-        duration = track_duration(path, r)
-        if
-          duration >= min_duration
-        and
-          duration <= max_duration
-        and
-          (artist == "" or artist != last_artist())
-        then
-          last_artist := artist
-          [r]
-        else
-          request.destroy(r)
-          pick(rest)
-        end
-      else
-        request.destroy(r)
-        pick(rest)
-      end
-    end
-  end
-
-  pick(candidates)
-end
-
-radio = request.dynamic.list(next_track)
+# Play every file in /tracks in a random order, looping forever.
+radio = playlist(mode="randomize", reload_mode="watch", "/tracks")
 
 # Keep the source infallible so Icecast never gets disconnected.
 radio = mksafe(radio)
 
 # --- Output ----------------------------------------------------------------
-radio_name = environment.get(default="Self Hosted Radio", "RADIO_NAME")
-radio_description =
-  environment.get(default="A self hosted radio, running 24/7.", "RADIO_DESCRIPTION")
-radio_genre = environment.get(default="Various", "RADIO_GENRE")
-
 output.icecast(
   %mp3(bitrate=128),
   host="icecast",
   port=8000,
   password=environment.get("ICECAST_SOURCE_PASSWORD"),
   mount="/radio.mp3",
-  name=radio_name,
-  description=radio_description,
-  genre=radio_genre,
+  name=environment.get(default="Self Hosted Radio", "RADIO_NAME"),
+  description=
+    environment.get(default="A self hosted radio, running 24/7.", "RADIO_DESCRIPTION"),
+  genre=environment.get(default="Various", "RADIO_GENRE"),
   radio
 )
