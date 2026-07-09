@@ -202,3 +202,22 @@ h1 {
   border: none;
   cursor: pointer;
 }
+
+.equalizer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  height: 80px;
+}
+
+.equalizer .vertical {
+  height: 5px;
+  width: 5px;
+  margin: 2px;
+  background-color: var(--accent);
+  transition: all 0.01s;
+  transition-timing-function: ease-in-out;
+
+  max-height: 50px;
+}
