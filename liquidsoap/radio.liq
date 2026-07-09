@@ -53,6 +53,26 @@ thread.run.recurrent(
   { refresh_library(); refresh_interval }
 )
 
+# Cache the estimated duration of each file. Estimating a track's duration is
+# the expensive step (Liquidsoap decodes the file to measure it), so we compute
+# it lazily -- only for the handful of tracks we actually sample -- and remember
+# the result forever. After the first play of a file its duration is free.
+durations = ref([])
+
+# Return the cached duration for a resolved request, computing and storing it
+# the first time we encounter the file.
+def track_duration(path, r) =
+  cached = list.assoc.mem(path, durations())
+  if cached then
+    list.assoc(default=0.0, path, durations())
+  else
+    m = request.metadata(r)
+    d = float_of_string(default=0.0, m["duration"])
+    durations := list.add((path, d), durations())
+    d
+  end
+end
+
 # --- Track selection -------------------------------------------------------
 # Returns the next request as a (possibly empty) list, as expected by
 # request.dynamic.list. We pick a random track whose duration is within the
@@ -75,7 +95,7 @@ def next_track() =
       if request.resolve(r) then
         m = request.metadata(r)
         artist = m["artist"]
-        duration = float_of_string(default=0.0, m["duration"])
+        duration = track_duration(path, r)
         if
           duration >= min_duration
         and
