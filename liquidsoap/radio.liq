@@ -11,45 +11,8 @@
 log.stdout := true
 log.level := 3
 
-# Remember the artist of the track that is currently playing so we can avoid
-# playing the same artist twice in a row.
-last_artist = ref("")
-
-# Keep tracks that are between one and five minutes long and whose artist is
-# different from the previously played one.
-def valid_track(r) =
-  # check_next runs before resolution, so resolve first to read the file and
-  # its metadata. Skip anything that cannot be resolved.
-  if not request.resolve(r) then
-    log("Skipping #{request.uri(r)}: could not resolve")
-    false
-  else
-    file = request.filename(r)
-    duration = request.duration(file) ?? 0.
-    artist = request.metadata(r)["artist"]
-    if duration < 60. or duration > 300. then
-      log("Skipping #{file}: out of range (#{duration}s)")
-      false
-    elsif artist != "" and artist == last_artist() then
-      log("Skipping #{file}: same artist in a row (#{artist})")
-      false
-    else
-      true
-    end
-  end
-end
-
 # Play every file in /tracks in a random order, looping forever.
-radio =
-  playlist(
-    mode="randomize", reload_mode="watch", check_next=valid_track, "/tracks"
-  )
-
-# Track the artist of the track that actually starts playing.
-def on_meta(m) =
-  last_artist := m["artist"]
-end
-radio.on_metadata(on_meta)
+radio = playlist(mode="randomize", reload_mode="watch", "/tracks")
 
 # Keep the source infallible so Icecast never gets disconnected.
 radio = mksafe(radio)
