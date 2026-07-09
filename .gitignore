@@ -1,0 +1,6 @@
+# Local environment with secrets
+.env
+
+# Audio tracks (do not commit your music library)
+tracks/*
+!tracks/.gitkeep

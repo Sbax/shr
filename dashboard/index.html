@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radio Dashboard</title>
+    <style>
+        :root {
+            --bg: #0f1115;
+            --card: #1a1d24;
+            --accent: #4ade80;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            color: var(--text);
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+
+        .card {
+            background: var(--card);
+            width: 100%;
+            max-width: 460px;
+            margin: 24px;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        h1 {
+            margin: 0 0 4px;
+            font-size: 1.5rem;
+        }
+
+        .desc {
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+
+        .now-playing-label {
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+
+        .title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 4px 0 24px;
+            min-height: 1.5em;
+        }
+
+        .stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat .value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .stat .label {
+            font-size: 0.7rem;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--muted);
+            margin-bottom: 16px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6b7280;
+        }
+
+        .dot.online {
+            background: var(--accent);
+            box-shadow: 0 0 8px var(--accent);
+        }
+
+        .dot.offline {
+            background: #ef4444;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="status">
+            <span class="dot" id="dot"></span>
+            <span id="status-text">Connecting…</span>
+        </div>
+        <h1 id="name">Radio</h1>
+        <p class="desc" id="description"></p>
+
+        <div class="now-playing-label">Now playing</div>
+        <div class="title" id="title">—</div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="value" id="listeners">0</div>
+                <div class="label">Listeners</div>
+            </div>
+            <div class="stat">
+                <div class="value" id="bitrate">—</div>
+                <div class="label">Bitrate</div>
+            </div>
+            <div class="stat">
+                <div class="value" id="genre">—</div>
+                <div class="label">Genre</div>
+            </div>
+        </div>
+
+        <audio id="player" controls preload="none" src="/radio.mp3"></audio>
+    </div>
+
+    <script>
+        const $ = (id) => document.getElementById(id);
+
+        function setOffline() {
+            $("dot").className = "dot offline";
+            $("status-text").textContent = "Offline";
+            $("title").textContent = "—";
+            $("listeners").textContent = "0";
+        }
+
+        async function refresh() {
+            try {
+                const res = await fetch("/status-json.xsl", { cache: "no-store" });
+                if (!res.ok) throw new Error("bad status");
+                const data = await res.json();
+                const stats = data.icestats || {};
+                let source = stats.source;
+                if (Array.isArray(source)) source = source[0];
+
+                if (!source) {
+                    setOffline();
+                    return;
+                }
+
+                $("dot").className = "dot online";
+                $("status-text").textContent = "Live";
+                $("name").textContent = source.server_name || "Radio";
+                $("description").textContent = source.server_description || "";
+                $("title").textContent = source.title || source.server_name || "Unknown";
+                $("listeners").textContent = source.listeners ?? 0;
+                $("bitrate").textContent = source.bitrate ? source.bitrate + "k" : "—";
+                $("genre").textContent = source.genre || "—";
+                document.title = source.server_name || "Radio Dashboard";
+            } catch (e) {
+                setOffline();
+            }
+        }
+
+        refresh();
+        setInterval(refresh, 5000);
+    </script>
+</body>
+
+</html>

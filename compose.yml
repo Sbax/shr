@@ -1,0 +1,30 @@
+services:
+  icecast:
+    build:
+      context: .
+      dockerfile: icecast/Dockerfile
+    restart: unless-stopped
+    ports:
+      # Expose the radio on the host under ${RADIO_PORT} (default 1970).
+      - "${RADIO_PORT:-1970}:8000"
+    environment:
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
+      ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD}
+      ICECAST_PASSWORD: ${ICECAST_PASSWORD}
+      ICECAST_RELAY_PASSWORD: ${ICECAST_RELAY_PASSWORD}
+      ICECAST_HOSTNAME: ${ICECAST_HOSTNAME:-localhost}
+
+  liquidsoap:
+    image: savonet/liquidsoap:v2.3.0
+    restart: unless-stopped
+    depends_on:
+      - icecast
+    environment:
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
+      RADIO_NAME: ${RADIO_NAME:-Self Hosted Radio}
+      RADIO_DESCRIPTION: ${RADIO_DESCRIPTION:-A self hosted radio, running 24/7.}
+      RADIO_GENRE: ${RADIO_GENRE:-Various}
+    volumes:
+      - ./tracks:/tracks:ro
+      - ./liquidsoap/radio.liq:/radio.liq:ro
+    command: ["/radio.liq"]
