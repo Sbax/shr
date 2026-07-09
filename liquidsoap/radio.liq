@@ -22,12 +22,25 @@ max_duration = 300.0   # 5 minutes
 # artist twice in a row.
 last_artist = ref("")
 
+# How many random candidates to inspect per selection. Resolving a request
+# reads the track's metadata (including its duration), so with a large library
+# we only want to pay that cost for a handful of tracks instead of the whole
+# collection.
+max_candidates = 5
+
 # --- Track selection -------------------------------------------------------
 # Returns the next request as a (possibly empty) list, as expected by
 # request.dynamic.list. We pick a random track whose duration is within the
 # allowed range and whose artist differs from the previously played one.
 def next_track() =
-  candidates = list.shuffle(file.ls(tracks_dir, absolute=true, recursive=true))
+  # file.ls with recursive=true also returns the sub-directories themselves.
+  # Keep only regular files so Liquidsoap never tries to resolve a directory.
+  all_entries = file.ls(tracks_dir, absolute=true, recursive=true)
+  files_only = list.filter(fun (p) -> not file.is_directory(p), all_entries)
+  # Only inspect a small random sample so we never resolve (and read the
+  # duration of) the entire library before starting playback.
+  candidates = list.shuffle(files_only)
+  candidates = list.prefix(max_candidates, candidates)
 
   def rec pick(files) =
     if files == [] then
