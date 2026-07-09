@@ -104,7 +104,6 @@
             $("dot").className = "dot offline";
             $("status-text").textContent = "Offline";
             $("title").textContent = "—";
-            $("listeners").textContent = "0";
         }
 
         async function refresh() {
@@ -126,9 +125,6 @@
                 $("name").textContent = source.server_name || "Radio";
                 $("description").textContent = source.server_description || "";
                 $("title").textContent = source.title || source.server_name || "Unknown";
-                $("listeners").textContent = source.listeners ?? 0;
-                $("bitrate").textContent = source.bitrate ? source.bitrate + "k" : "—";
-                $("genre").textContent = source.genre || "—";
                 document.title = source.server_name || "Radio Dashboard";
             } catch (e) {
                 setOffline();
