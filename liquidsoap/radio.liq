@@ -18,20 +18,21 @@ last_artist = ref("")
 # Keep tracks that are between one and five minutes long and whose artist is
 # different from the previously played one.
 def valid_track(r) =
-  file = request.filename(r)
-  duration = request.duration(file)
-  if duration < 60. or duration > 300. then
-    log("Skipping #{file}: out of range (#{duration}s)")
+  # check_next runs before resolution, so resolve first to read the file and
+  # its metadata. Skip anything that cannot be resolved.
+  if not request.resolve(r) then
+    log("Skipping #{request.uri(r)}: could not resolve")
     false
   else
-    if request.resolve(r) then
-      artist = request.metadata(r)["artist"]
-      if artist != "" and artist == last_artist() then
-        log("Skipping #{file}: same artist in a row (#{artist})")
-        false
-      else
-        true
-      end
+    file = request.filename(r)
+    duration = request.duration(file) ?? 0.
+    artist = request.metadata(r)["artist"]
+    if duration < 60. or duration > 300. then
+      log("Skipping #{file}: out of range (#{duration}s)")
+      false
+    elsif artist != "" and artist == last_artist() then
+      log("Skipping #{file}: same artist in a row (#{artist})")
+      false
     else
       true
     end
