@@ -5,122 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Radio Dashboard</title>
-    <style>
-        :root {
-            --bg: #0f1115;
-            --card: #1a1d24;
-            --accent: #4ade80;
-            --text: #e5e7eb;
-            --muted: #9ca3af;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--bg);
-            color: var(--text);
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        }
-
-        .card {
-            background: var(--card);
-            width: 100%;
-            max-width: 460px;
-            margin: 24px;
-            padding: 32px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        h1 {
-            margin: 0 0 4px;
-            font-size: 1.5rem;
-        }
-
-        .desc {
-            margin: 0 0 24px;
-            color: var(--muted);
-            font-size: 0.9rem;
-        }
-
-        .now-playing-label {
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            font-size: 0.7rem;
-            color: var(--muted);
-        }
-
-        .title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin: 4px 0 24px;
-            min-height: 1.5em;
-        }
-
-        .stats {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
-        .stat {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 12px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .stat .value {
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: var(--accent);
-        }
-
-        .stat .label {
-            font-size: 0.7rem;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.8rem;
-            color: var(--muted);
-            margin-bottom: 16px;
-        }
-
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #6b7280;
-        }
-
-        .dot.online {
-            background: var(--accent);
-            box-shadow: 0 0 8px var(--accent);
-        }
-
-        .dot.offline {
-            background: #ef4444;
-        }
-
-        audio {
-            width: 100%;
-            margin-top: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css" />
 </head>
 
 <body>
@@ -135,26 +20,85 @@
         <div class="now-playing-label">Now playing</div>
         <div class="title" id="title">—</div>
 
-        <div class="stats">
-            <div class="stat">
-                <div class="value" id="listeners">0</div>
-                <div class="label">Listeners</div>
-            </div>
-            <div class="stat">
-                <div class="value" id="bitrate">—</div>
-                <div class="label">Bitrate</div>
-            </div>
-            <div class="stat">
-                <div class="value" id="genre">—</div>
-                <div class="label">Genre</div>
+        <div class="player">
+            <button class="play-btn" id="play-btn" type="button" aria-label="Play">
+                <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+                </svg>
+            </button>
+
+            <div class="volume">
+                <button class="mute-btn" id="mute-btn" type="button" aria-label="Mute">
+                    <svg class="icon-volume" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 9v6h4l5 5V4L7 9H3z" />
+                        <path d="M16 8a5 5 0 0 1 0 8" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                    <svg class="icon-muted" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 9v6h4l5 5V4L7 9H3z" />
+                        <path d="M16 9l6 6M22 9l-6 6" fill="none" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+                <input class="volume-slider" id="volume" type="range" min="0" max="1" step="0.01" value="1"
+                    aria-label="Volume" />
             </div>
         </div>
 
-        <audio id="player" controls preload="none" src="/radio.mp3"></audio>
+        <audio id="player" preload="none" src="/radio.mp3"></audio>
     </div>
 
     <script>
         const $ = (id) => document.getElementById(id);
+
+        const player = $("player");
+        const playBtn = $("play-btn");
+        const muteBtn = $("mute-btn");
+        const volume = $("volume");
+
+        function syncPlayBtn() {
+            const playing = !player.paused && !player.ended;
+            playBtn.classList.toggle("playing", playing);
+            playBtn.setAttribute("aria-label", playing ? "Pause" : "Play");
+        }
+
+        playBtn.addEventListener("click", () => {
+            if (player.paused) {
+                player.load();
+                player.play().catch(() => { });
+            } else {
+                player.pause();
+            }
+        });
+
+        player.addEventListener("play", syncPlayBtn);
+        player.addEventListener("playing", syncPlayBtn);
+        player.addEventListener("pause", syncPlayBtn);
+
+        function syncMuteBtn() {
+            const muted = player.muted || player.volume === 0;
+            muteBtn.classList.toggle("muted", muted);
+            muteBtn.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+        }
+
+        volume.addEventListener("input", () => {
+            player.volume = parseFloat(volume.value);
+            player.muted = player.volume === 0;
+            syncMuteBtn();
+        });
+
+        muteBtn.addEventListener("click", () => {
+            player.muted = !player.muted;
+            volume.value = player.muted ? 0 : player.volume || 1;
+            if (!player.muted && player.volume === 0) {
+                player.volume = 1;
+                volume.value = 1;
+            }
+            syncMuteBtn();
+        });
 
         function setOffline() {
             $("dot").className = "dot offline";
