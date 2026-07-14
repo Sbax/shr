@@ -3,7 +3,7 @@ const audioElement = document.querySelector("audio");
 const COLUMNS_NUMBER = 16;
 const SQUARES_NUMBER = COLUMNS_NUMBER / 2;
 
-const CHARACTERS = ["░", "✵", "✶", "✺", "✻", "✿", "❀", "✚", "✙", "᛭", "𐊛"];
+const CHARACTERS = "maletta".split("");
 
 const getRandom = (arr) => arr[Math.floor(Math.random() * arr.length)];
 
@@ -45,14 +45,20 @@ audioElement.addEventListener(
     const buffer = new Uint8Array(frequencyBinsCount);
     track.connect(gainNode).connect(analyser).connect(audioCtx.destination);
 
-    const columns = document.getElementsByClassName("vertical");
+    const columns = Array.from(document.getElementsByClassName("vertical"));
+
     setInterval(
       (analyser, buffer, columns) => {
         analyser.getByteFrequencyData(buffer);
-        Array.from(columns).forEach((column, i) => {
-          const squares = Math.round((buffer[i] / 255) * SQUARES_NUMBER);
+        columns.forEach((column, i) => {
+          const squares = (buffer[i] * SQUARES_NUMBER) / 255;
 
           [...column.querySelectorAll(".square")].forEach((square, index) => {
+            if (!squares) {
+              square.className = "square";
+              return;
+            }
+
             if (index + 1 >= squares * 2) {
               square.innerHTML = getRandom(CHARACTERS);
               square.className = "square active";

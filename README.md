@@ -74,8 +74,9 @@ restarting the stack.
   `/radio.mp3`.
 - `icecast/icecast.xml` configures Icecast and serves the custom dashboard at the
   root URL instead of the default status page.
-- `dashboard/` contains the web player (`index.html` and `style.css`) that Icecast
-  serves.
+- `dashboard/` is bind-mounted into Icecast for live dashboard edits, but only for
+  `index.html` and `dashboard-resources/`, so built-in files like
+  `/status-json.xsl` remain available.
 
 ## Common commands
 

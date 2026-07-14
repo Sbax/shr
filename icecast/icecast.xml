@@ -35,7 +35,7 @@
         <adminroot>/usr/share/icecast2/admin</adminroot>
         <!-- Serve the custom dashboard at the root URL instead of the
              default Icecast status page. -->
-        <alias source="/" dest="/index.html"/>
+        <alias source="/" dest="/index.html" />
     </paths>
 
     <logging>

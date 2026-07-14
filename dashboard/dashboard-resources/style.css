@@ -1,8 +1,15 @@
 :root {
   --bg: #1e1e1e;
   --accent: #e4ff1a;
-  --text: #e5e7eb;
-  --muted: #a5a7ab;
+  --text: #e5e5e5;
+  --muted: #a5a5a5;
+  --danger: #ef4444;
+  --slider-track: #4e4e4e;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --control-size: 2.5rem;
 }
 
 * {
@@ -11,6 +18,7 @@
 
 body {
   margin: 0;
+  padding: var(--space-3);
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -21,21 +29,23 @@ body {
 }
 
 .card {
-  width: 100%;
-  max-width: 460px;
-  margin: 24px;
-  padding: 32px;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.card > * {
+  margin: 0;
 }
 
 h1 {
-  margin: 0 0 4px;
+  margin: 0;
   font-size: 1.5rem;
 }
 
 .desc {
-  margin: 0 0 24px;
   color: var(--muted);
   font-size: 0.9rem;
+  min-height: 1.25em;
 }
 
 .now-playing-label {
@@ -48,36 +58,40 @@ h1 {
 .title {
   font-size: 1.25rem;
   font-weight: 600;
-  margin: 4px 0 24px;
   min-height: 1.5em;
 }
 
-.stat .value {
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent);
+.meta {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
-.stat .label {
-  font-size: 0.7rem;
-  color: var(--muted);
+.meta-label {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+}
+
+.meta-value {
+  color: var(--text);
+  font-size: 1rem;
 }
 
 .status {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--space-1);
+  min-height: 1rem;
   font-size: 0.8rem;
   color: var(--muted);
-  margin-bottom: 16px;
 }
 
 .dot {
-  width: 8px;
-  height: 8px;
-  background: #6b7280;
+  width: var(--space-1);
+  height: var(--space-1);
+  flex: 0 0 auto;
 }
 
 .dot.online {
@@ -85,23 +99,23 @@ h1 {
 }
 
 .dot.offline {
-  background: #ef4444;
+  background: var(--danger);
 }
 
 .player {
   display: flex;
-  gap: 16px;
-  margin-top: 8px;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .play-btn {
   flex: 0 0 auto;
-  width: 48px;
-  height: 48px;
+  width: var(--control-size);
+  height: var(--control-size);
   padding: 0;
   border: none;
   background: var(--accent);
-  color: #111;
+  color: var(--bg);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -120,8 +134,8 @@ h1 {
 }
 
 .play-btn svg {
-  width: 22px;
-  height: 22px;
+  width: 1.5rem;
+  height: 1.5rem;
   fill: currentColor;
 }
 
@@ -137,13 +151,13 @@ h1 {
 .volume {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--space-1);
 }
 
 .mute-btn {
   flex: 0 0 auto;
-  width: 32px;
-  height: 32px;
+  width: 1.25rem;
+  height: 1.25rem;
   padding: 0;
   border: none;
   background: transparent;
@@ -160,8 +174,8 @@ h1 {
 }
 
 .mute-btn svg {
-  width: 20px;
-  height: 20px;
+  width: 1.25rem;
+  height: 1.25rem;
   fill: currentColor;
 }
 
@@ -177,27 +191,38 @@ h1 {
 .volume-slider {
   -webkit-appearance: none;
   appearance: none;
-  width: 80px;
-  height: 4px;
-  border-radius: 2px;
-  background: #444;
+  width: 4rem;
+  height: 0.25rem;
+  background: var(--slider-track);
   cursor: pointer;
   outline: none;
+}
+
+.volume-slider::-webkit-slider-runnable-track {
+  height: 0.25rem;
+  background: var(--slider-track);
+}
+
+.volume-slider::-moz-range-track {
+  height: 0.25rem;
+  background: var(--slider-track);
+  border: none;
 }
 
 .volume-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 10px;
-  height: 10px;
+  width: var(--space-1);
+  height: var(--space-1);
   background: var(--accent);
   border: none;
   cursor: pointer;
+  margin-top: calc((0.25rem - var(--space-1)) / 2);
 }
 
 .volume-slider::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
+  width: var(--space-1);
+  height: var(--space-1);
   background: var(--accent);
   border: none;
   cursor: pointer;
@@ -207,21 +232,20 @@ h1 {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
+  gap: var(--space-1);
+}
 
-  padding-top: 8px;
+.vertical > * + * {
+  margin-top: var(--space-1);
 }
 
 .equalizer .vertical {
   display: flex;
   flex-direction: column;
-  padding-right: 8px;
 }
 
 .equalizer .vertical .square {
-  height: 8px;
-  width: 8px;
-  margin-bottom: 8px;
-
+  line-height: 1;
   color: var(--muted);
   opacity: 50%;
 }

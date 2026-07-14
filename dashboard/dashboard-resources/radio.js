@@ -1,9 +1,8 @@
-const $ = (id) => document.getElementById(id);
-
-const player = $("player");
-const playBtn = $("play-btn");
-const muteBtn = $("mute-btn");
-const volume = $("volume");
+const player = document.getElementById("player");
+const playBtn = document.getElementById("play-btn");
+const muteBtn = document.getElementById("mute-btn");
+const volume = document.getElementById("volume");
+const listeners = document.getElementById("listeners");
 
 function syncPlayBtn() {
   const playing = !player.paused && !player.ended;
@@ -13,6 +12,8 @@ function syncPlayBtn() {
 
 playBtn.addEventListener("click", () => {
   if (player.paused) {
+    player.src = player.src += `?cachebust=${new Date().getTime()}`;
+
     player.load();
     player.play().catch(() => {});
   } else {
@@ -47,9 +48,10 @@ muteBtn.addEventListener("click", () => {
 });
 
 function setOffline() {
-  $("dot").className = "dot offline";
-  $("status-text").textContent = "Offline";
-  $("title").textContent = "—";
+  document.getElementById("dot").className = "dot offline";
+  document.getElementById("status-text").textContent = "Offline";
+  document.getElementById("title").textContent = "—";
+  listeners.textContent = "—";
 }
 
 async function refresh() {
@@ -68,11 +70,14 @@ async function refresh() {
       return;
     }
 
-    $("dot").className = "dot online";
-    $("status-text").textContent = "Live";
-    $("name").textContent = source.server_name || "Radio";
-    $("description").textContent = source.server_description || "";
-    $("title").textContent = source.title || source.server_name || "Unknown";
+    document.getElementById("dot").className = "dot online";
+    document.getElementById("status-text").textContent = "Live";
+    document.getElementById("name").textContent = source.server_name || "Radio";
+    document.getElementById("description").textContent =
+      source.server_description || "";
+    document.getElementById("title").textContent =
+      source.title || source.server_name || "Unknown";
+    listeners.textContent = `${source.listeners ?? 0}`;
     document.title = source.server_name || "Radio Dashboard";
   } catch (e) {
     setOffline();

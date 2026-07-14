@@ -5,7 +5,8 @@ services:
       dockerfile: icecast/Dockerfile
     restart: unless-stopped
     volumes:
-      - ./dashboard/:/usr/share/icecast2/web/
+      - ./dashboard/index.html:/usr/share/icecast2/web/index.html:ro
+      - ./dashboard/dashboard-resources:/usr/share/icecast2/web/dashboard-resources:ro
     environment:
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
       ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD}
