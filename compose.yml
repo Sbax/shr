@@ -4,15 +4,17 @@ services:
       context: .
       dockerfile: icecast/Dockerfile
     restart: unless-stopped
-    ports:
-      # Expose the radio on the host under ${RADIO_PORT} (default 1970).
-      - "${RADIO_PORT:-1970}:8000"
+    volumes:
+      - ./dashboard/:/usr/share/icecast2/web/
     environment:
       ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD}
       ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD}
       ICECAST_PASSWORD: ${ICECAST_PASSWORD}
       ICECAST_RELAY_PASSWORD: ${ICECAST_RELAY_PASSWORD}
       ICECAST_HOSTNAME: ${ICECAST_HOSTNAME:-localhost}
+    ports:
+      # Expose the radio on the host under ${RADIO_PORT} (default 1970).
+      - "${RADIO_PORT:-1970}:8000"
 
   liquidsoap:
     image: savonet/liquidsoap:v2.3.0

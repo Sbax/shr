@@ -208,16 +208,30 @@ h1 {
   flex-wrap: wrap;
   align-items: flex-end;
 
-  height: 80px;
+  padding-top: 8px;
 }
 
 .equalizer .vertical {
-  height: 5px;
-  width: 5px;
-  margin: 2px;
-  background-color: var(--accent);
-  transition: all 0.01s;
-  transition-timing-function: ease-in-out;
+  display: flex;
+  flex-direction: column;
+  padding-right: 8px;
+}
 
-  max-height: 50px;
+.equalizer .vertical .square {
+  height: 8px;
+  width: 8px;
+  margin-bottom: 8px;
+
+  color: var(--muted);
+  opacity: 50%;
+}
+
+.equalizer .vertical .square.active {
+  color: var(--accent);
+  opacity: 100%;
+}
+
+.equalizer .vertical .square.active.muted {
+  color: var(--text);
+  opacity: 100%;
 }
