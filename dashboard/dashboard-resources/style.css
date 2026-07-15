@@ -251,11 +251,11 @@ h1 {
 }
 
 .equalizer .vertical .square.active {
-  color: var(--accent);
+  color: var(--text);
   opacity: 100%;
 }
 
-.equalizer .vertical .square.active.muted {
-  color: var(--text);
+.equalizer .vertical .square.active.accent {
+  color: var(--accent);
   opacity: 100%;
 }
